@@ -1,0 +1,4 @@
+text:
+  splitter:
+    chunk-size: 1000
+    chunk-overlap: 200

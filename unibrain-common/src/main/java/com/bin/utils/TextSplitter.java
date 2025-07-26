@@ -1,5 +1,8 @@
 package com.bin.utils;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -10,6 +13,7 @@ import java.util.regex.Pattern;
  * @since 2023/10/14 16:17
  * 文本切割（Java正则表达式和StringBuilder）
  */
+@Component
 public class TextSplitter {
 
     // 正则匹配中文或英文句子结尾（句号、问号、感叹号等）
@@ -17,14 +21,14 @@ public class TextSplitter {
     private final int chunkSize; // 每个文本块的最大长度
     private final int chunkOverlap; // 文本块之间的重叠长度
 
-    public TextSplitter(int chunkSize, int chunkOverlap) {
+    public TextSplitter(@Value("${text.splitter.chunk-size:300}")int chunkSize,@Value("${text.splitter.chunk-overlap:100}") int chunkOverlap) {
         this.chunkSize = chunkSize;
         this.chunkOverlap = chunkOverlap;
     }
 
     public List<String> splitText(String text) {
         List<String> result = new ArrayList<>();
-        String[] sentences = splitBySentence(text);
+        String[] sentences = splitBySentenceStatic(text);
         StringBuilder currentChunk = new StringBuilder();
         int currentLength = 0;
         for(String sentence : sentences){
@@ -56,7 +60,7 @@ public class TextSplitter {
     }
 
     // 按句子分割文本
-    private String[] splitBySentence(String text) {
+    public static String[] splitBySentenceStatic(String text) {
         Pattern pattern = Pattern.compile(SPLIT_REGEX);
         Matcher matcher = pattern.matcher(text);
         List<String> result = new ArrayList<>();
