@@ -16,6 +16,8 @@
         <spring-ai.version>1.0.0</spring-ai.version>
         <springdoc.openapi.version>2.8.9</springdoc.openapi.version>
         <mysql.version>8.0.33</mysql.version>
+        <lombok.version>1.18.38</lombok.version>
+        <mybatis-plus.version>3.5.12</mybatis-plus.version>
     </properties>
 
     <!--子模块-->
@@ -59,6 +61,18 @@
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
+            </dependency>
+            <!--lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+            <!--mybatis-plus -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
             </dependency>
 
         </dependencies>

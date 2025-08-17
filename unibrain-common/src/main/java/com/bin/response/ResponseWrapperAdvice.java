@@ -30,8 +30,12 @@ public class ResponseWrapperAdvice implements ResponseBodyAdvice<Object> {
     /*在此可定义排除的包，比如排除特定包下的controller*/
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
-        return true; // 对所有响应体进行包装
+         // 对所有响应体进行包装
         /*还可以排除特定包下的controller，具体可根据需求实现*/
+        if (returnType.hasMethodAnnotation(NoWrap.class)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

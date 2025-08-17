@@ -11,5 +11,19 @@
 
     <artifactId>unibrain-course</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.bin</groupId>
+            <artifactId>unibrain-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- Excel 依赖 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+    </dependencies>
+
 
 </project>
