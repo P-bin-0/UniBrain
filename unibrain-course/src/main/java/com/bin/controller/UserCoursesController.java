@@ -29,6 +29,7 @@ public class UserCoursesController {
     @Autowired
     private UserCoursesService userCoursesService;
     @GetMapping("/show")
+    //TODO完成根据用户ID查询用户的课表
     public ApiResponse<List<UserCoursesVO>> showUserCourses() {
         // 从数据库查询用户的课表
         List<UserCoursesVO> userCourses = userCoursesService.getUserCourses();

@@ -2,6 +2,7 @@ package com.bin.handler;
 
 import com.bin.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleBusinessException(IllegalArgumentException e) {
         return ApiResponse.error(400, e.getMessage());
+    }
+    //捕获缺少请求参数异常
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        return ApiResponse.error(400, "缺少必要的请求参数: " + e.getParameterName());
     }
     //其他异常...
 }
