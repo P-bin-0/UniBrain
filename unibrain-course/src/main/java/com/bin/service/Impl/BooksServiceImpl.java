@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 课程相关书籍实现类
@@ -34,6 +35,11 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
     @Autowired
     private ObjectMapper objectMapper;
 
+    /**
+     * 分页查询书籍
+     * @param booksPageQuery 书籍分页查询参数
+     * @return 书籍VO列表
+     */
     @Override
     public PageResult<BooksVo> pageQuery(BooksPageQuery booksPageQuery) {
         String cacheKey = generateCacheKey(booksPageQuery);
@@ -88,6 +94,95 @@ public class BooksServiceImpl extends ServiceImpl<BooksMapper, Books> implements
             // 释放锁
             redisCacheUtil.unlock(lockKey);
         }
+    }
+
+    /**
+     * 添加书籍
+     * @param books 书籍信息
+     */
+    @Override
+    public void addBook(Books books) {
+        int count = booksMapper.insert(books);
+        if (count > 0) {
+            //查询新添加的书籍
+            Books newBook = booksMapper.selectByName(books.getName());
+            //添加缓存
+            redisCacheUtil.setObject("book:" + newBook.getId(), newBook, 10, TimeUnit.MINUTES);
+            //删除所有相关的缓存（分页查询缓存）
+            redisCacheUtil.deleteByPattern("books:page:*");
+        }else {
+            log.error("添加书籍失败");
+            throw new RuntimeException("添加书籍失败");
+        }
+
+    }
+
+    /**
+     * 删除书籍(批量或单都可)
+     * @param ids 书籍id列表
+     * @return 删除成功的书籍数量
+     */
+    @Override
+    public int deleteByIds(List<Long> ids) {
+        //检验ids是否存在无效数据
+        List<Books> books = booksMapper.selectByIds(ids);
+        if (books.size() != ids.size()) {
+            log.error("删除书籍失败，存在无效数据");
+            throw new RuntimeException("删除书籍失败，存在无效数据");
+        }
+        //删除数据库数据
+        int count = booksMapper.deleteByIds(ids);
+        //删除缓存
+        //批量删除单条数据缓存（books:1001..）
+        List<String> singleKeys = ids.stream()
+                .map(id -> "books:" + id)
+                .toList();
+        redisCacheUtil.deleteBatch(singleKeys);
+        //删除相关集合缓存（books:page:1）
+        redisCacheUtil.deleteByPattern("books:page:*");
+        return count;
+    }
+
+    /**
+     * 更新书籍
+     * @param books 书籍信息
+     */
+    @Override
+    public void updateBook(Books books) {
+        Books existBook = booksMapper.selectById(books.getId());
+        if (existBook == null) {
+            log.error("更新书籍失败，书籍不存在");
+            throw new RuntimeException("更新书籍失败，书籍不存在");
+        }
+        //更新数据
+        booksMapper.updateById(books);
+        //删除单条数据缓存
+        String cacheKey = "books:" + books.getId();
+        redisCacheUtil.delete(cacheKey);
+        //删除相关集合缓存（books:page:1）
+        redisCacheUtil.deleteByPattern("books:page:*");
+    }
+
+    /**
+     * 根据id查询书籍
+     * @param id 书籍id
+     * @return 书籍信息
+     */
+    @Override
+    public Books getBookById(Long id) {
+        String cacheKey = "books:" + id;
+        //1.尝试从缓存获取
+        Books books = redisCacheUtil.getObject(cacheKey, Books.class);
+        if (books != null) {
+            return books;
+        }
+        //2.缓存未命中，查询数据库
+        books = booksMapper.selectById(id);
+        if (books != null) {
+            //3.将查询结果放入缓存
+            redisCacheUtil.setObject(cacheKey, books, 10, TimeUnit.MINUTES);
+        }
+        return books;
     }
 
     /**
