@@ -1,0 +1,31 @@
+package com.bin.controller;
+
+import com.bin.dto.vo.GradesVO;
+import com.bin.service.GradesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * 成绩Controller
+ * @author bin
+ */
+@RestController
+@RequestMapping("/api/grades")
+public class GradesController {
+    @Autowired
+    private GradesService gradesService;
+    /**
+     * 查询成绩（根据用户名）
+     * @param userName 用户名
+     * @return 成绩列表
+     */
+    @GetMapping("/getByUserName")
+    public List<GradesVO> getByUserName(@RequestParam("userName") String userName) {
+        return gradesService.getByUserName(userName);
+    }
+}
