@@ -18,3 +18,10 @@ mybatis-plus:
 logging:
   level:
     com.bin.mapper: debug
+
+langchain4j:
+  community:
+    dashscope:
+      chat-model:
+        api-key: ${DASHSCOPE_API_KEY}
+        model-name: qwen-plus

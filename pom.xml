@@ -19,6 +19,7 @@
         <lombok.version>1.18.38</lombok.version>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <hutool.version>5.8.38</hutool.version>
+        <latest.version.here>1.0.0-beta3</latest.version.here>
     </properties>
 
     <!--子模块-->
@@ -46,6 +47,14 @@
                 <groupId>org.springframework.ai</groupId>
                 <artifactId>spring-ai-bom</artifactId>
                 <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- langchain4j 依赖 -->
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-community-bom</artifactId>
+                <version>${latest.version.here}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

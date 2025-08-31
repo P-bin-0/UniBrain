@@ -1,5 +1,6 @@
 package com.bin.controller;
 
+import com.bin.dto.StudentSemesterAvgDTO;
 import com.bin.dto.vo.GradesVO;
 import com.bin.service.GradesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,5 +28,21 @@ public class GradesController {
     @GetMapping("/getByUserName")
     public List<GradesVO> getByUserName(@RequestParam("userName") String userName) {
         return gradesService.getByUserName(userName);
+    }
+    /**
+     * 查询用户每个学期的平均成绩（根据用户名查询）
+     */
+    @GetMapping("/getAVG")
+    public List<StudentSemesterAvgDTO> getAverageGradesByUserName(@RequestParam("userName") String userName) {
+        return gradesService.getAverageGradesByUserName(userName);
+    }
+    /**
+     * 分析用户成绩
+     * @param userName 用户名
+     * @return 分析报告
+     */
+    @GetMapping("/ai/analyze")
+    public String analyzeScoresWithAi(@RequestParam("userName") String userName) {
+        return gradesService.analyzeScoresWithAi(userName);
     }
 }
