@@ -1,7 +1,8 @@
 package com.bin.controller;
 
 import com.bin.dto.SummaryRequest;
-import com.bin.util.SummaryGenerator;
+import com.bin.service.SummaryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,24 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/summary")
 public class SummaryController {
 
-    private final SummaryGenerator summaryGenerator;
-
-    public SummaryController(SummaryGenerator summaryGenerator) {
-        this.summaryGenerator = summaryGenerator;
-    }
+    @Autowired
+    private SummaryService summaryService;
 
     /**
      * 生成摘要
      * @param request 摘要请求参数
      * @return 摘要响应结果
      */
-    @PostMapping
+    @PostMapping("/generate")
     public String generateSummary(@RequestBody SummaryRequest request) {
-        try {
-            return summaryGenerator.generateSummary(request.getText());
-        } catch (Exception e) {
-            return "生成摘要失败：" + e.getMessage();
-        }
+        return summaryService.generateSummary(request.getText());
     }
 
 }
