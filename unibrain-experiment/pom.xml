@@ -11,5 +11,12 @@
 
     <artifactId>unibrain-experiment</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.bin</groupId>
+            <artifactId>unibrain-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 
 </project>

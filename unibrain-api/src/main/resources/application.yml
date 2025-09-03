@@ -13,7 +13,10 @@ spring:
 
 mybatis-plus:
   configuration:
+    map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-handlers-package: com.baomidou.mybatisplus.extension.handlers
 
 logging:
   level:
