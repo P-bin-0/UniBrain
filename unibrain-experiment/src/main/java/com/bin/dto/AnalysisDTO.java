@@ -4,7 +4,6 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,16 +12,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 实验分析实体类
- * @author bin
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName(value = "analysis", autoResultMap = true)
-public class Analysis {
-    @TableId(type = IdType.AUTO)
+public class AnalysisDTO {
     @ExcelProperty(value = "id")
     private Long id; // 主键
     @ExcelProperty(value = "name")
@@ -36,7 +29,5 @@ public class Analysis {
     @ExcelProperty(value = "length")
     private Integer length; // 摆长（cm）
     @ExcelProperty(value = "period")
-    // 存储JSON字符串，后端用List<Double>接收
-    @TableField(typeHandler = JacksonTypeHandler.class) //MyBatis-Plus类型处理器
-    private List<Double> period; // 周期（秒）
+    private String period; // 周期（秒）
 }
