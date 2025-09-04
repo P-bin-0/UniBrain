@@ -4,10 +4,7 @@ import com.bin.dto.vo.AnalysisVO;
 import com.bin.service.AnalysisService;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +24,14 @@ public class AnalysisController {
     @GetMapping("/list")
     public List<AnalysisVO> list(@RequestParam("name")@NonNull String name) {
         return analysisService.getByName(name);
+    }
+    /**
+     * 调用大模型分析数据，判断实验数据是否有不合理的地方
+     * @param name 实验人姓名
+     * @return 分析结果
+     */
+    @GetMapping("/model")
+    public String model(@RequestParam("name")@NonNull String name) {
+        return analysisService.model(name);
     }
 }

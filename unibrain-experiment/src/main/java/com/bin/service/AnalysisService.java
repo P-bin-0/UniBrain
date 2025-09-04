@@ -17,4 +17,11 @@ public interface AnalysisService extends IService<Analysis> {
      * @return 实验分析数据
      */
     List<AnalysisVO> getByName(@NonNull String name);
+
+    /**
+     * 调用大模型分析数据，判断实验数据是否有不合理的地方
+     * @param name 实验人姓名
+     * @return 分析结果
+     */
+    String model(@NonNull String name);
 }
