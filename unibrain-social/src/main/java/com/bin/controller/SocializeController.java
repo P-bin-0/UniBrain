@@ -7,6 +7,7 @@ import com.bin.service.SocializeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.List;
 
 /**
@@ -43,6 +44,23 @@ public class SocializeController {
                                                   @RequestParam(value = "page", defaultValue = "0") int page,
                                                   @RequestParam(value = "size", defaultValue = "10") int size) {
         List<SocializeVO> voList = socializeService.searchComment(keyword, page, size);
+        return ApiResponse.success(voList);
+    }
+    // 按用户ID搜索评论
+    @GetMapping("/search/user")
+    public ApiResponse<List<SocializeVO>> searchByUserId(@RequestParam("userId") Long userId,
+                                                         @RequestParam(value = "page", defaultValue = "0") int page,
+                                                         @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<SocializeVO> voList = socializeService.searchByUserId(userId, page, size);
+        return ApiResponse.success(voList);
+    }
+
+    // 按目标ID搜索评论
+    @GetMapping("/search/target")
+    public ApiResponse<List<SocializeVO>> searchByTargetId(@RequestParam("targetId") Long targetId,
+                                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                                           @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<SocializeVO> voList = socializeService.searchByTargetId(targetId, page, size);
         return ApiResponse.success(voList);
     }
 }

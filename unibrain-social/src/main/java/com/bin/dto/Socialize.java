@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -22,6 +23,7 @@ public class Socialize {
     private Long id; // 主键
     private Long userId; // 用户id
     private String content; // 内容
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createAt; // 创建时间
     private Long likeCount; // 点赞数
     private Long contentCount; // 评论数

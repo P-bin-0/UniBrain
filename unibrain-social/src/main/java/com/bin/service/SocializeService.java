@@ -27,4 +27,14 @@ public interface SocializeService extends IService<Socialize> {
      * 搜索评论
      */
     List<SocializeVO> searchComment(String keyword, int page, int size);
+
+    /**
+     * 按用户ID搜索
+     */
+    List<SocializeVO> searchByUserId(Long userId, int page, int size);
+
+    /**
+     * 按目标ID搜索（如某篇文章的所有评论）
+     */
+    List<SocializeVO> searchByTargetId(Long targetId, int page, int size);
 }

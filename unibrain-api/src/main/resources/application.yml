@@ -10,6 +10,10 @@ spring:
       port: 6379
       password: 123456
       database: 0
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 30s
 
 mybatis-plus:
   configuration:
@@ -20,6 +24,7 @@ mybatis-plus:
 
 logging:
   level:
+    org.springframework.data.elasticsearch: debug
     com.bin.mapper: debug
 
 langchain4j:
