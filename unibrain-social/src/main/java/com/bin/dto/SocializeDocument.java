@@ -27,7 +27,8 @@ public class SocializeDocument {
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String content;
 
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date,
+    format = DateFormat.date_hour_minute_second)
     private LocalDateTime createAt;
 
     @Field(type = FieldType.Long)
