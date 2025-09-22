@@ -15,4 +15,5 @@ import lombok.NonNull;
 public class EvaluatePageQuery {
     private String userName; /** 评价人 */
     private String semester; /** 评价学期 */
+    private Boolean isEvaluate; /** 是否评价（0：未评价；1：已评价） */
 }

@@ -16,7 +16,7 @@ public interface GradesService extends IService<Grades> {
      * @param userName 用户名
      * @return 成绩列表
      */
-    List<GradesVO> getByUserName(String userName);
+    List<GradesVO> getByUserName(String userName, String semester);
 
     /**
      * 查询用户每个学期的平均成绩（根据用户名查询）

@@ -26,8 +26,9 @@ public class GradesController {
      * @return 成绩列表
      */
     @GetMapping("/getByUserName")
-    public List<GradesVO> getByUserName(@RequestParam("userName") String userName) {
-        return gradesService.getByUserName(userName);
+    public List<GradesVO> getByUserName(@RequestParam("userName") String userName,
+                                         @RequestParam(value = "semester", required = false) String semester) {
+        return gradesService.getByUserName(userName, semester);
     }
     /**
      * 查询用户每个学期的平均成绩（根据用户名查询）

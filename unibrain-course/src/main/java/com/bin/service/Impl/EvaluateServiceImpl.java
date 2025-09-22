@@ -43,6 +43,9 @@ public class EvaluateServiceImpl extends ServiceImpl<EvaluateMapper, Evaluate> i
         if (query.getSemester() != null) {
             wrapper.eq(Evaluate::getSemester, query.getSemester());
         }
+        if (query.getIsEvaluate() != null) {
+            wrapper.eq(Evaluate::getIsEvaluate, query.getIsEvaluate());
+        }
         List<Evaluate> list = evaluateMapper.selectList(wrapper);
 
         //将分页结果转为VO对象

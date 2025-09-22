@@ -32,7 +32,7 @@ public class GradesServiceImpl extends ServiceImpl<GradesMapper, Grades> impleme
      * @return 成绩列表
      */
     @Override
-    public List<GradesVO> getByUserName(String userName) {
+    public List<GradesVO> getByUserName(String userName, String semester) {
         //判断用户名是否为空
         if (userName.isEmpty()) {
             throw new IllegalArgumentException("用户名不能为空");
@@ -42,8 +42,14 @@ public class GradesServiceImpl extends ServiceImpl<GradesMapper, Grades> impleme
         if (!exists) {
             throw new IllegalArgumentException("用户不存在");
         }
+        //添加查询条件
+        LambdaQueryWrapper<Grades> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Grades::getUserName, userName);
+        if (semester != null && !semester.isEmpty()) {
+            queryWrapper.eq(Grades::getSemester, semester);
+        }
         //查询该用户的成绩
-        List<Grades> gradesList = gradesMapper.selectList(new LambdaQueryWrapper<Grades>().eq(Grades::getUserName, userName));
+        List<Grades> gradesList = gradesMapper.selectList(queryWrapper);
         //将查询结果转换为VO类并返回
         return BeanUtil.copyToList(gradesList, GradesVO.class);
     }
