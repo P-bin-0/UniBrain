@@ -26,6 +26,7 @@ logging:
   level:
     org.springframework.data.elasticsearch: debug
     com.bin.mapper: debug
+    com.bin: debug
 
 langchain4j:
   community:

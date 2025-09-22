@@ -15,6 +15,4 @@ import lombok.NonNull;
 public class EvaluatePageQuery {
     private String userName; /** 评价人 */
     private String semester; /** 评价学期 */
-    private Integer pageNum = 1; /** 页码 */
-    private Integer pageSize = 10; /** 每页条数 */
 }

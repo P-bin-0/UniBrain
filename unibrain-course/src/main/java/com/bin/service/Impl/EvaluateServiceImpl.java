@@ -32,33 +32,27 @@ public class EvaluateServiceImpl extends ServiceImpl<EvaluateMapper, Evaluate> i
      * @return
      */
     @Override
-    public PageResult<EvaluateVO> getEvaluate(EvaluatePageQuery query) {
+    public List<EvaluateVO> getEvaluate(EvaluatePageQuery query) {
         //判断用户名是否为空
         if (query.getUserName() == null || query.getUserName().isEmpty()) {
             throw new IllegalArgumentException("评价人不能为空");
         }
-        //创建分页对象
-        Page<Evaluate> page = new Page<>(query.getPageNum(), query.getPageSize());
-        //查询条件
+        //直接将数据库的数据查询出来
         LambdaQueryWrapper<Evaluate> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Evaluate::getUserName, query.getUserName());
         if (query.getSemester() != null) {
             wrapper.eq(Evaluate::getSemester, query.getSemester());
         }
-        //查询
-        Page<Evaluate> evaluatePage = evaluateMapper.selectPage(page, wrapper);
+        List<Evaluate> list = evaluateMapper.selectList(wrapper);
+
         //将分页结果转为VO对象
-        List<EvaluateVO> list = evaluatePage.getRecords().stream().map(evaluate -> {
+        List<EvaluateVO> resList = list.stream().map(evaluate -> {
             EvaluateVO evaluateVO = new EvaluateVO();
             BeanUtil.copyProperties(evaluate, evaluateVO);
             return evaluateVO;
         }).toList();
         //返回结果
-        return new PageResult<>(
-                evaluatePage.getTotal(),
-                evaluatePage.getCurrent(),
-                evaluatePage.getSize(),
-                list);
+        return resList;
     }
 
     /**

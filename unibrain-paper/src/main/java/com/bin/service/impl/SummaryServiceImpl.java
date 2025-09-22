@@ -31,6 +31,7 @@ public class SummaryServiceImpl implements SummaryService {
                 3. 语言通顺，不超过150字;
                 4. 保留重要细节，不丢失信息;
                 5. 总结主要结果和发现;
+                内容：%s
                 """.formatted(text);
         // 调用模型生成摘要
         try {

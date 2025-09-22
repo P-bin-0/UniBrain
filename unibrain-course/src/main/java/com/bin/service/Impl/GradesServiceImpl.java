@@ -84,6 +84,7 @@ public class GradesServiceImpl extends ServiceImpl<GradesMapper, Grades> impleme
                  3. 个性化学习建议（口语化、鼓励性，80字以内）
                  4. 之后适合的发展方向
                  请用中文输出，不要使用 Markdown，不要分点，直接写成一段话。
+                成绩数据：%s
                 """.formatted(scores);
         //调用 AI 模型
         try{

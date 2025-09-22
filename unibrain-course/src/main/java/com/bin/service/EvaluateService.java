@@ -16,7 +16,7 @@ public interface EvaluateService extends IService<Evaluate> {
     /**
      * 查询评价课程
      */
-    PageResult<EvaluateVO> getEvaluate(EvaluatePageQuery query);
+    List<EvaluateVO> getEvaluate(EvaluatePageQuery query);
 
     /**
      * 评价课程
