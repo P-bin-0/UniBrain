@@ -22,4 +22,9 @@ public interface EvaluateService extends IService<Evaluate> {
      * 评价课程
      */
     void updateEvaluate(Evaluate evaluate);
+
+    /**
+     * 根据评价id查询评价课程
+     */
+    EvaluateVO getEvaluateById(Long id);
 }

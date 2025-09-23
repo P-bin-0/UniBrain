@@ -81,5 +81,25 @@ public class EvaluateServiceImpl extends ServiceImpl<EvaluateMapper, Evaluate> i
         if (update != 1) {
             throw new IllegalArgumentException("评价课程更新失败");
         }
+        //更新评价状态
+        wrapper.set(Evaluate::getIsEvaluate, true);
+        update = evaluateMapper.update(wrapper);
+        if (update != 1) {
+            throw new IllegalArgumentException("评价课程更新失败");
+        }
+    }
+
+    /**
+     * 根据评价id查询评价课程
+     */
+    @Override
+    public EvaluateVO getEvaluateById(Long id) {
+        Evaluate evaluate = evaluateMapper.selectById(id);
+        if (evaluate == null) {
+            throw new IllegalArgumentException("评价课程不存在");
+        }
+        EvaluateVO evaluateVO = new EvaluateVO();
+        BeanUtil.copyProperties(evaluate, evaluateVO);
+        return evaluateVO;
     }
 }

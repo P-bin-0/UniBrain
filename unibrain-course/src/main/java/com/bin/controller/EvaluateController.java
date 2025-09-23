@@ -1,5 +1,6 @@
 package com.bin.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.bin.dto.Evaluate;
 import com.bin.dto.vo.EvaluatePageQuery;
 import com.bin.dto.vo.EvaluateVO;
@@ -43,5 +44,13 @@ public class EvaluateController {
         }
         evaluateService.updateEvaluate(evaluate);
         return ApiResponse.success();
+    }
+    /**
+     * 根据评价id查询评价课程
+     */
+    @GetMapping("/getById")
+    public ApiResponse<EvaluateVO> getById(@RequestParam("id") Long id) {
+        EvaluateVO evaluateVO = evaluateService.getEvaluateById(id);
+        return ApiResponse.success(evaluateVO);
     }
 }
