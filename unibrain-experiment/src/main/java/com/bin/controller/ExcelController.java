@@ -26,8 +26,7 @@ public class ExcelController {
     @PostMapping("/upload")
     public String uploadExcel(@RequestParam("file") MultipartFile file) {
         try {
-            excelService.importExcel(file);
-            return "上传成功";
+            return excelService.importExcel(file);
         } catch (IOException e) {
             return "上传失败";
         }

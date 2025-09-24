@@ -1,5 +1,6 @@
 package com.bin.service.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bin.dto.Analysis;
 import com.bin.dto.AnalysisDTO;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -30,7 +32,9 @@ public class ExcelServiceImpl extends ServiceImpl<ExcelMapper, Analysis> impleme
      * @throws IOException 异常
      */
     @Override
-    public void importExcel(MultipartFile file) throws IOException {
+    public String importExcel(MultipartFile file) throws IOException {
+        // 生成批次id
+        String batchId = UUID.randomUUID().toString();
         //验证文件是否为空
         if (file.isEmpty()) {
             throw new IllegalArgumentException("上传的文件为空");
@@ -48,11 +52,29 @@ public class ExcelServiceImpl extends ServiceImpl<ExcelMapper, Analysis> impleme
         List<AnalysisDTO> analysisDTOList = ExcelUtils.parseExcel(file);
         //将analysisList转换为Analysis
         List<Analysis> analysisList = analysisDTOList.stream()
-                .map(this::convertToAnalysis)
+                .map(dto -> {
+                    Analysis analysis = convertToAnalysis(dto);
+                    analysis.setBatchId(batchId);
+                    return analysis;
+                })
                 .collect(Collectors.toList());
         //保存数据到数据库
         excelMapper.insert(analysisList);
+        return batchId;
     }
+
+    /**
+     * 根据批次id查询数据
+     * @param batchId 批次id
+     * @return 数据列表
+     */
+    @Override
+    public List<Analysis> getByBatchId(String batchId) {
+        LambdaQueryWrapper<Analysis> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Analysis::getBatchId, batchId);
+        return baseMapper.selectList(wrapper);
+    }
+
     /**
      * 将AnalysisDTO转换为Analysis对象
      * @param dto AnalysisDTO对象

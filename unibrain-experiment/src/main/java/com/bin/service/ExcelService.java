@@ -5,6 +5,7 @@ import com.bin.dto.Analysis;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * 文件上传
@@ -15,5 +16,9 @@ public interface ExcelService extends IService<Analysis> {
      * @param file 文件
      * @throws IOException 异常
      */
-    void importExcel(MultipartFile file) throws IOException;
+    String importExcel(MultipartFile file) throws IOException;
+    /**
+     * 根据批次id查询数据
+     */
+    List<Analysis> getByBatchId(String batchId);
 }

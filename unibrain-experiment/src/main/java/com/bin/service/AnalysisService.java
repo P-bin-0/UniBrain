@@ -13,15 +13,14 @@ import java.util.List;
 public interface AnalysisService extends IService<Analysis> {
     /**
      * 根据实验人姓名查询实验分析数据
-     * @param name 实验人姓名
      * @return 实验分析数据
      */
-    List<AnalysisVO> getByName(@NonNull String name);
+    List<AnalysisVO> getAnalysis(@NonNull String batchId);
 
     /**
      * 调用大模型分析数据，判断实验数据是否有不合理的地方
-     * @param name 实验人姓名
+     * @param batchId 实验人姓名
      * @return 分析结果
      */
-    String model(@NonNull String name);
+    String model(@NonNull String batchId);
 }

@@ -6,8 +6,10 @@ import com.bin.dto.Analysis;
 import com.bin.dto.vo.AnalysisVO;
 import com.bin.mapper.AnalysisMapper;
 import com.bin.service.AnalysisService;
+import com.bin.service.ExcelService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.NonNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,21 +23,23 @@ public class AnalysisServiceImpl extends ServiceImpl<AnalysisMapper, Analysis> i
 
     private ChatLanguageModel chatLanguageModel;
 
+    @Autowired
+    private ExcelService excelService;
+
     public AnalysisServiceImpl(ChatLanguageModel chatLanguageModel) {
         this.chatLanguageModel = chatLanguageModel;
     }
     /**
      * 根据实验人姓名查询实验分析数据
-     * @param name 实验人姓名
      * @return 实验分析数据
      */
     @Override
-    public List<AnalysisVO> getByName(@NonNull String name) {
-        LambdaQueryWrapper<Analysis> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Analysis::getName, name);
-        List<Analysis> analysisList = baseMapper.selectList(wrapper);
+    public List<AnalysisVO> getAnalysis(@NonNull String batchId) {
+
+        List<Analysis> analysisList = excelService.getByBatchId(batchId);
+
         if (analysisList.isEmpty()) {
-            throw new RuntimeException("未找到该实验人");
+            throw new RuntimeException("未找到该批次的实验数据");
         }
         // 转换为VO
         return analysisList.stream().map(analysis -> new AnalysisVO(
@@ -51,13 +55,13 @@ public class AnalysisServiceImpl extends ServiceImpl<AnalysisMapper, Analysis> i
 
     /**
      * 调用大模型分析数据，判断实验数据是否有不合理的地方
-     * @param name 实验人姓名
+     * @param batchId 实验人姓名
      * @return 分析结果
      */
     @Override
-    public String model(@NonNull String name) {
-        //先根据姓名查询实验分析数据
-        List<AnalysisVO> analysisVOList = getByName(name);
+    public String model(@NonNull String batchId) {
+        //先根据批次id查询实验分析数据
+        List<AnalysisVO> analysisVOList = getAnalysis(batchId);
         // 将数据转换为字符串形式
         StringBuilder dataStr = new StringBuilder();
         for (AnalysisVO analysisVO : analysisVOList) {

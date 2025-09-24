@@ -39,4 +39,6 @@ public class Analysis {
     // 存储JSON字符串，后端用List<Double>接收
     @TableField(typeHandler = JacksonTypeHandler.class) //MyBatis-Plus类型处理器
     private List<Double> period; // 周期（秒）
+    @ExcelProperty(value = "batch_id")
+    private String batchId; // 批次id
 }
