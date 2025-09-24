@@ -37,4 +37,9 @@ public interface SocializeService extends IService<Socialize> {
      * 按目标ID搜索（如某篇文章的所有评论）
      */
     List<SocializeVO> searchByTargetId(Long targetId, int page, int size);
+
+    /**
+     * 查询所有评论
+     */
+    List<SocializeVO> selectAll(int page, int size);
 }

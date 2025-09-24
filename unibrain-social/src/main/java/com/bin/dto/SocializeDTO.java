@@ -13,12 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SocializeDTO {
-    private Long id; // 主键
+
     private Long userId; // 用户id
     private String content; // 内容
-    private Long likeCount; // 点赞数
-    private Long contentCount; // 评论数
-    private Long forwardCount; // 转发数
+
     private Long targetId; // 目标id
     private Long parentId; // 父id
 }

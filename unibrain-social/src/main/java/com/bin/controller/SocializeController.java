@@ -1,14 +1,17 @@
 package com.bin.controller;
 
+import com.bin.dto.Socialize;
 import com.bin.dto.SocializeDTO;
 import com.bin.dto.vo.SocializeVO;
 import com.bin.response.ApiResponse;
 import com.bin.service.SocializeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 社交控制器
@@ -61,6 +64,13 @@ public class SocializeController {
                                                            @RequestParam(value = "page", defaultValue = "0") int page,
                                                            @RequestParam(value = "size", defaultValue = "10") int size) {
         List<SocializeVO> voList = socializeService.searchByTargetId(targetId, page, size);
+        return ApiResponse.success(voList);
+    }
+    // 查询所有评论
+    @GetMapping("/all")
+    public ApiResponse<List<SocializeVO>> getAllComments(@RequestParam(value = "page", defaultValue = "0") int page,
+                                                         @RequestParam(value = "size", defaultValue = "10") int size) {
+        List<SocializeVO> voList = socializeService.selectAll(page, size);
         return ApiResponse.success(voList);
     }
 }

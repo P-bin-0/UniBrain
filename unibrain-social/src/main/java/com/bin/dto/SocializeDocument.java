@@ -24,6 +24,10 @@ public class SocializeDocument {
     @Field(type = FieldType.Long)
     private Long userId;
 
+    // 存储真实用户名
+    @Field(type = FieldType.Keyword)
+    private String userName;
+
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String content;
 

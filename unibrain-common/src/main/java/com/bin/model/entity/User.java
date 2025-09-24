@@ -1,4 +1,4 @@
-package com.bin.dto;
+package com.bin.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -7,14 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @author P-bin
- * @date 2023/4/10 15:22
- * @description 用户
- */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @TableName("user")
 public class User {
     @TableId(type = IdType.AUTO)

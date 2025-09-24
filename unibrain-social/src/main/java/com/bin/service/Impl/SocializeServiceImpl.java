@@ -7,6 +7,8 @@ import com.bin.dto.SocializeDTO;
 import com.bin.dto.SocializeDocument;
 import com.bin.dto.vo.SocializeVO;
 import com.bin.mapper.SocializeMapper;
+import com.bin.mapper.UserMapper;
+import com.bin.model.entity.User;
 import com.bin.repository.SocializeDocumentRepository;
 import com.bin.service.SocializeService;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +24,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -46,6 +50,9 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
     @Autowired
     private ExecutorService executorService;
 
+    @Autowired
+    private UserMapper userMapper;
+
     /**
      * 发表评论
      */
@@ -55,13 +62,13 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         if (socializeDTO.getContent() == null) {
             throw new IllegalArgumentException("评论内容不能为空");
         }
-        // 将点赞数，评论数，转发数都设置为0
-        socializeDTO.setLikeCount(0L);
-        socializeDTO.setContentCount(0L);
-        socializeDTO.setForwardCount(0L);
         // 转换为实体类
         Socialize socialize = new Socialize();
         BeanUtils.copyProperties(socializeDTO, socialize);
+        // 将点赞数，评论数，转发数都设置为0
+        socialize.setLikeCount(0L);
+        socialize.setContentCount(0L);
+        socialize.setForwardCount(0L);
         // 设置插入时间
         socialize.setCreateAt(LocalDateTime.now());
         // 插入数据库
@@ -139,7 +146,15 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         return documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    BeanUtils.copyProperties(document, vo);
+                    vo.setId(document.getId());
+                    vo.setUserName(document.getUserName());
+                    vo.setContent(document.getContent());
+                    vo.setCreateAt(document.getCreateAt());
+                    vo.setLikeCount(document.getLikeCount());
+                    vo.setContentCount(document.getContentCount());
+                    vo.setForwardCount(document.getForwardCount());
+                    vo.setTargetId(document.getTargetId());
+                    vo.setParentId(document.getParentId());
                     return vo;
                 })
                 .collect(Collectors.toList());
@@ -151,7 +166,15 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         return documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    BeanUtils.copyProperties(document, vo);
+                    vo.setId(document.getId());
+                    vo.setUserName(document.getUserName());
+                    vo.setContent(document.getContent());
+                    vo.setCreateAt(document.getCreateAt());
+                    vo.setLikeCount(document.getLikeCount());
+                    vo.setContentCount(document.getContentCount());
+                    vo.setForwardCount(document.getForwardCount());
+                    vo.setTargetId(document.getTargetId());
+                    vo.setParentId(document.getParentId());
                     return vo;
                 })
                 .collect(Collectors.toList());
@@ -164,11 +187,45 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         return documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    BeanUtils.copyProperties(document, vo);
+                    vo.setId(document.getId());
+                    vo.setUserName(document.getUserName());
+                    vo.setContent(document.getContent());
+                    vo.setCreateAt(document.getCreateAt());
+                    vo.setLikeCount(document.getLikeCount());
+                    vo.setContentCount(document.getContentCount());
+                    vo.setForwardCount(document.getForwardCount());
+                    vo.setTargetId(document.getTargetId());
+                    vo.setParentId(document.getParentId());
                     return vo;
                 })
                 .collect(Collectors.toList());
     }
+
+    /**
+     * 查询所有评论
+     */
+    @Override
+    public List<SocializeVO> selectAll(int page, int size) {
+        // 分页查询所有评论
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createAt"));
+        Page<SocializeDocument> documentPage = socializeDocumentRepository.findAll(pageRequest);
+        return documentPage.getContent().stream()
+                .map(document -> {
+                    SocializeVO vo = new SocializeVO();
+                    vo.setId(document.getId());
+                    vo.setUserName(document.getUserName());
+                    vo.setContent(document.getContent());
+                    vo.setCreateAt(document.getCreateAt());
+                    vo.setLikeCount(document.getLikeCount());
+                    vo.setContentCount(document.getContentCount());
+                    vo.setForwardCount(document.getForwardCount());
+                    vo.setTargetId(document.getTargetId());
+                    vo.setParentId(document.getParentId());
+                    return vo;
+                })
+                .collect(Collectors.toList());
+    }
+
     // 添加一个方法用于初始化ES数据（用于将现有MySQL数据导入ES）
     @PostConstruct
     public void initElasticsearchData() {
@@ -193,8 +250,41 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
 
                     // 将MySQL中的所有数据导入ES
                     List<Socialize> allSocializes = socializeMapper.selectList(null);
+                    if (allSocializes.isEmpty()) {
+                        logger.info("MySQL中无评论数据，无需导入");
+                        return;
+                    }
+                    // 批量查询所有需要的userId对应的用户名（避免N+1问题）
+                    Set<Long> userIds = allSocializes.stream()
+                            .map(Socialize::getUserId)
+                            .collect(Collectors.toSet());
+                    // 批量查询user表(1次查询）
+                    List<User> users = userMapper.selectByIds(userIds);
+                    // 构建用户id到用户名的映射
+                    Map<Long,String> userIdToNameMap = users.stream()
+                            .collect(Collectors.toMap(
+                                    User::getId,
+                                    User::getName,
+                                    (k1,k2) -> k1
+                            ));
                     List<SocializeDocument> documents = allSocializes.stream()
-                            .map(this::convertToDocument)
+                            .map(socialize -> {
+                                // 从批量映射中获取用户名，确保不会为null
+                                String userName = userIdToNameMap.getOrDefault(socialize.getUserId(), "未知用户");
+                                // 直接构建文档，不调用convertToDocument（避免重复查询）
+                                return SocializeDocument.builder()
+                                        .id(socialize.getId())
+                                        .userId(socialize.getUserId())
+                                        .userName(userName)  // 使用批量映射的用户名
+                                        .content(socialize.getContent())
+                                        .createAt(socialize.getCreateAt())
+                                        .likeCount(socialize.getLikeCount())
+                                        .contentCount(socialize.getContentCount())
+                                        .forwardCount(socialize.getForwardCount())
+                                        .targetId(socialize.getTargetId())
+                                        .parentId(socialize.getParentId())
+                                        .build();
+                            })
                             .collect(Collectors.toList());
 
                     if (!documents.isEmpty()) {
@@ -210,9 +300,12 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         }, executorService); // 需要注入一个线程池
     }
     private SocializeDocument convertToDocument(Socialize socialize) {
+        User user = userMapper.selectById(socialize.getUserId());
+        String username = user != null ? user.getName() : "未知用户";
         return SocializeDocument.builder()
                 .id(socialize.getId())
                 .userId(socialize.getUserId())
+                .userName(username)
                 .content(socialize.getContent())
                 .createAt(socialize.getCreateAt())
                 .likeCount(socialize.getLikeCount())

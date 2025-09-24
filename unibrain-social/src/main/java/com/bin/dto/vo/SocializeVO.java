@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class SocializeVO {
     private Long id; // 主键
-    private Long userId; // 用户id
+    private String userName; // 用户id
     private String content; // 内容
     private LocalDateTime createAt; // 创建时间
     private Long likeCount; // 点赞数
