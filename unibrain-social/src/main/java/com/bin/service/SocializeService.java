@@ -1,10 +1,13 @@
 package com.bin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.bin.dto.PageQueryDTO;
+import com.bin.dto.PageResult;
 import com.bin.dto.Socialize;
 import com.bin.dto.SocializeDTO;
 import com.bin.dto.vo.SocializeVO;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -26,20 +29,20 @@ public interface SocializeService extends IService<Socialize> {
     /**
      * 搜索评论
      */
-    List<SocializeVO> searchComment(String keyword, int page, int size);
+    PageResult<SocializeVO> searchComment(String keyword, PageQueryDTO pageQueryDTO);
 
     /**
      * 按用户ID搜索
      */
-    List<SocializeVO> searchByUserId(Long userId, int page, int size);
+    PageResult<SocializeVO> searchByUserIdScrollInit(Long userId, PageQueryDTO pageQueryDTO);
 
     /**
      * 按目标ID搜索（如某篇文章的所有评论）
      */
-    List<SocializeVO> searchByTargetId(Long targetId, int page, int size);
+    PageResult<SocializeVO> searchByTargetId(Long targetId, PageQueryDTO pageQueryDTO);
 
     /**
      * 查询所有评论
      */
-    List<SocializeVO> selectAll(int page, int size);
+    PageResult<SocializeVO> selectAll(PageQueryDTO pageQueryDTO);
 }

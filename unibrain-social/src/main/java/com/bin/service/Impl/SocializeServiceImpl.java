@@ -1,10 +1,18 @@
 package com.bin.service.Impl;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldSort;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.TotalHits;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bin.dto.Socialize;
-import com.bin.dto.SocializeDTO;
-import com.bin.dto.SocializeDocument;
+import com.bin.dto.*;
 import com.bin.dto.vo.SocializeVO;
 import com.bin.mapper.SocializeMapper;
 import com.bin.mapper.UserMapper;
@@ -22,7 +30,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +62,13 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private ElasticsearchClient client;
+
+    // 滚动上下文有效期
+    private static final String SCROLL_TIME = "1m"; // 1分钟
+
 
     /**
      * 发表评论
@@ -137,93 +154,95 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         return socializeVOList;
     }*/
     @Override
-    public List<SocializeVO> searchComment(String keyword, int page, int size) {
+    public PageResult<SocializeVO> searchComment(String keyword, PageQueryDTO pageQueryDTO) {
+        int maxPage = 1000; // 可配置在配置文件中
+        if (pageQueryDTO.getPage() > maxPage) {
+            throw new IllegalArgumentException("页码超过上限，请使用滚动加载");
+        }
         // 使用Elasticsearch进行搜索
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createAt"));
-        Page<SocializeDocument> documentPage = socializeDocumentRepository.findByContentContaining(keyword, pageRequest);
+        PageRequest pageRequest = PageRequest.of(
+                pageQueryDTO.getPage() - 1,
+                pageQueryDTO.getPageSize(),
+                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));
+        Page<SocializeDocument> documentPage;
+        try {
+            documentPage = socializeDocumentRepository.findByContentContaining(keyword, pageRequest);
+        } catch (Exception e) {
+            logger.error("ES搜索评论失败，关键词：{}，分页参数：{}", keyword, pageQueryDTO, e);
+            throw new RuntimeException("搜索失败，请稍后重试");
+        }
 
         // 转换为VO对象
-        return documentPage.getContent().stream()
+        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    vo.setId(document.getId());
-                    vo.setUserName(document.getUserName());
-                    vo.setContent(document.getContent());
-                    vo.setCreateAt(document.getCreateAt());
-                    vo.setLikeCount(document.getLikeCount());
-                    vo.setContentCount(document.getContentCount());
-                    vo.setForwardCount(document.getForwardCount());
-                    vo.setTargetId(document.getTargetId());
-                    vo.setParentId(document.getParentId());
+                    BeanUtils.copyProperties(document, vo);
                     return vo;
                 })
-                .collect(Collectors.toList());
+                .toList();
+        // 返回结果
+        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
     }
-    // 按用户ID搜索
-    public List<SocializeVO> searchByUserId(Long userId, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createAt"));
+    // 按用户ID搜索评论
+    @Override
+    public PageResult<SocializeVO> searchByUserIdScrollInit(Long userId, PageQueryDTO pageQueryDTO) {
+        // 分页查询
+        PageRequest pageRequest = PageRequest.of(
+                pageQueryDTO.getPage() - 1,
+                pageQueryDTO.getPageSize(),
+                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));
         Page<SocializeDocument> documentPage = socializeDocumentRepository.findByUserId(userId, pageRequest);
-        return documentPage.getContent().stream()
+        // 转换为VO对象
+        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    vo.setId(document.getId());
-                    vo.setUserName(document.getUserName());
-                    vo.setContent(document.getContent());
-                    vo.setCreateAt(document.getCreateAt());
-                    vo.setLikeCount(document.getLikeCount());
-                    vo.setContentCount(document.getContentCount());
-                    vo.setForwardCount(document.getForwardCount());
-                    vo.setTargetId(document.getTargetId());
-                    vo.setParentId(document.getParentId());
+                    BeanUtils.copyProperties(document, vo);
                     return vo;
                 })
-                .collect(Collectors.toList());
+                .toList();
+        // 返回结果
+        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
     }
 
     // 按目标ID搜索（如某篇文章的所有评论）
-    public List<SocializeVO> searchByTargetId(Long targetId, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createAt"));
+    @Override
+    public PageResult<SocializeVO> searchByTargetId(Long targetId, PageQueryDTO pageQueryDTO) {
+        // 分页查询
+        PageRequest pageRequest = PageRequest.of(
+                pageQueryDTO.getPage() - 1,
+                pageQueryDTO.getPageSize(),
+                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));
         Page<SocializeDocument> documentPage = socializeDocumentRepository.findByTargetId(targetId, pageRequest);
-        return documentPage.getContent().stream()
+        // 转换为VO对象
+        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    vo.setId(document.getId());
-                    vo.setUserName(document.getUserName());
-                    vo.setContent(document.getContent());
-                    vo.setCreateAt(document.getCreateAt());
-                    vo.setLikeCount(document.getLikeCount());
-                    vo.setContentCount(document.getContentCount());
-                    vo.setForwardCount(document.getForwardCount());
-                    vo.setTargetId(document.getTargetId());
-                    vo.setParentId(document.getParentId());
+                    BeanUtils.copyProperties(document, vo);
                     return vo;
                 })
-                .collect(Collectors.toList());
+                .toList();
+        // 返回结果
+        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
     }
 
     /**
      * 查询所有评论
      */
     @Override
-    public List<SocializeVO> selectAll(int page, int size) {
+    public PageResult<SocializeVO> selectAll(PageQueryDTO pageQueryDTO) {
         // 分页查询所有评论
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createAt"));
+        PageRequest pageRequest = PageRequest.of(pageQueryDTO.getPage() - 1, pageQueryDTO.getPageSize(), Sort.by(Sort.Direction.DESC, "createAt"));
         Page<SocializeDocument> documentPage = socializeDocumentRepository.findAll(pageRequest);
-        return documentPage.getContent().stream()
+        // 转换为VO对象
+        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
                 .map(document -> {
                     SocializeVO vo = new SocializeVO();
-                    vo.setId(document.getId());
-                    vo.setUserName(document.getUserName());
-                    vo.setContent(document.getContent());
-                    vo.setCreateAt(document.getCreateAt());
-                    vo.setLikeCount(document.getLikeCount());
-                    vo.setContentCount(document.getContentCount());
-                    vo.setForwardCount(document.getForwardCount());
-                    vo.setTargetId(document.getTargetId());
-                    vo.setParentId(document.getParentId());
+                    BeanUtils.copyProperties(document, vo);
                     return vo;
                 })
-                .collect(Collectors.toList());
+                .toList();
+        // 返回结果
+        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
     }
 
     // 添加一个方法用于初始化ES数据（用于将现有MySQL数据导入ES）
