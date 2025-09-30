@@ -23,6 +23,8 @@ mybatis-plus:
   type-handlers-package: com.baomidou.mybatisplus.extension.handlers
 
 logging:
+  charset:
+    console: utf-8
   level:
     org.springframework.data.elasticsearch: debug
     com.bin.mapper: debug
@@ -34,3 +36,7 @@ langchain4j:
       chat-model:
         api-key: ${DASHSCOPE_API_KEY}
         model-name: qwen-plus
+
+jwt:
+  secret: a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8s9T0u1V2w3X4y5Z6
+  expiration: 7200000

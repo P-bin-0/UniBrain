@@ -49,12 +49,11 @@ public class SocializeController {
         PageResult<SocializeVO> voList = socializeService.searchComment(keyword, pageQueryDTO);
         return ApiResponse.success(voList);
     }
-    // 按用户ID搜索评论
-    @GetMapping("/search/user")
-    public ApiResponse<PageResult<SocializeVO>> searchByUserId(@RequestParam("userId") Long userId,
-                                                               @Validated PageQueryDTO pageQueryDTO) {
-        PageResult<SocializeVO> voList = socializeService.searchByUserIdScrollInit(userId, pageQueryDTO);
-        return ApiResponse.success(voList);
+    // 按评论ID搜索评论
+    @GetMapping("/search/comment")
+    public ApiResponse<SocializeVO> searchByCommentId(@RequestParam("id") Long id) {
+        SocializeVO vo = socializeService.searchByCommentIdScrollInit(id);
+        return ApiResponse.success(vo);
     }
 
     // 按目标ID搜索评论

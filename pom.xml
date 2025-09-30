@@ -30,6 +30,7 @@
         <module>unibrain-experiment</module>
         <module>unibrain-social</module>
         <module>unibrain-api</module>
+        <module>unibrain-security</module>
     </modules>
     <!-- 统一管理依赖版本 -->
     <dependencyManagement>

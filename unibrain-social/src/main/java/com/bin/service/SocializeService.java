@@ -34,7 +34,7 @@ public interface SocializeService extends IService<Socialize> {
     /**
      * 按用户ID搜索
      */
-    PageResult<SocializeVO> searchByUserIdScrollInit(Long userId, PageQueryDTO pageQueryDTO);
+    SocializeVO searchByCommentIdScrollInit(Long id);
 
     /**
      * 按目标ID搜索（如某篇文章的所有评论）

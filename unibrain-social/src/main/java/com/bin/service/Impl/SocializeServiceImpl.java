@@ -185,23 +185,20 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
     }
     // 按用户ID搜索评论
     @Override
-    public PageResult<SocializeVO> searchByUserIdScrollInit(Long userId, PageQueryDTO pageQueryDTO) {
+    public SocializeVO searchByCommentIdScrollInit(Long id) {
         // 分页查询
-        PageRequest pageRequest = PageRequest.of(
+        /*PageRequest pageRequest = PageRequest.of(
                 pageQueryDTO.getPage() - 1,
                 pageQueryDTO.getPageSize(),
-                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));
-        Page<SocializeDocument> documentPage = socializeDocumentRepository.findByUserId(userId, pageRequest);
+                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));*/
+        SocializeDocument document = socializeDocumentRepository.findById(id).orElse(null);
         // 转换为VO对象
-        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
-                .map(document -> {
-                    SocializeVO vo = new SocializeVO();
-                    BeanUtils.copyProperties(document, vo);
-                    return vo;
-                })
-                .toList();
+        SocializeVO vo = new SocializeVO();
+        if (document != null) {
+            BeanUtils.copyProperties(document, vo);
+        }
         // 返回结果
-        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
+        return vo;
     }
 
     // 按目标ID搜索（如某篇文章的所有评论）
