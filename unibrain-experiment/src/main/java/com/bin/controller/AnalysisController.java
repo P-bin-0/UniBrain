@@ -4,6 +4,7 @@ import com.bin.dto.vo.AnalysisVO;
 import com.bin.service.AnalysisService;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class AnalysisController {
      * 查询实验分析数据(根据批次id)
      * @return 实验分析数据
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/list")
     public List<AnalysisVO> list(@RequestParam("batchId")@NonNull String batchId) {
         return analysisService.getAnalysis(batchId);
@@ -29,6 +31,7 @@ public class AnalysisController {
      * @param batchId 实验人姓名
      * @return 分析结果
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/model")
     public String model(@RequestParam("batchId")@NonNull String batchId) {
         return analysisService.model(batchId);

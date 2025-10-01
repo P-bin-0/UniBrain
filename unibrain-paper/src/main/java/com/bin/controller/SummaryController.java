@@ -3,6 +3,7 @@ package com.bin.controller;
 import com.bin.dto.SummaryRequest;
 import com.bin.service.SummaryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ public class SummaryController {
      * @param request 摘要请求参数
      * @return 摘要响应结果
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/generate")
     public String generateSummary(@RequestBody SummaryRequest request) {
         return summaryService.generateSummary(request.getText());

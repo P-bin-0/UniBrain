@@ -2,6 +2,7 @@ package com.bin.controller;
 
 import com.bin.service.ExcelService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +24,7 @@ public class ExcelController {
      * @param file 文件
      * @return 上传结果
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/upload")
     public String uploadExcel(@RequestParam("file") MultipartFile file) {
         try {
