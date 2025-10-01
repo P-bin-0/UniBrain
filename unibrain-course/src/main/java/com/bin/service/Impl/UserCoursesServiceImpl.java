@@ -9,10 +9,13 @@ import com.bin.response.ApiResponse;
 import com.bin.response.NoWrap;
 import com.bin.service.UserCoursesService;
 
+import com.bin.util.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -28,8 +31,10 @@ public class UserCoursesServiceImpl extends ServiceImpl<UserCoursesMapper, UserC
     private UserCoursesMapper userCoursesMapper;
     @Override
     public List<UserCoursesVO> getUserCourses() {
-        List<UserCoursesVO> userCoursesVOList = userCoursesMapper.getShowUserCourses();
-        return userCoursesVOList;
+        // 获取当前用户的ID
+        Long userId = SecurityUtil.getCurrentUserId();
+        // 从数据库查询用户的课表
+        return userCoursesMapper.getShowUserCourses(userId);
     }
     /**
      * 导出用户的课表为Excel文件
@@ -43,7 +48,9 @@ public class UserCoursesServiceImpl extends ServiceImpl<UserCoursesMapper, UserC
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
             // 从数据库查询所有课程数据
-            List<UserCoursesVO> dataList = userCoursesMapper.getShowUserCourses();
+            // 修改2：添加用户ID参数
+            Long userId = SecurityUtil.getCurrentUserId();
+            List<UserCoursesVO> dataList = userCoursesMapper.getShowUserCourses(userId);
             if (dataList == null) {
                 dataList = new ArrayList<>(); // 使用可修改的空列表，避免Collections.emptyList()的问题
             }

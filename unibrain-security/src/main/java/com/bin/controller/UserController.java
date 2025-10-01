@@ -4,6 +4,7 @@ import com.bin.Service.impl.UserLoginService;
 import com.bin.entity.LoginUser;
 import com.bin.entity.User;
 import com.bin.response.ApiResponse;
+import com.bin.util.SecurityUtil;
 import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,25 @@ public class UserController {
         } else {
             return ApiResponse.error(400, "用户注册失败");
         }
+    }
+
+    /**
+     * 获取登录用户的信息
+     */
+    @PermitAll
+    @GetMapping("/info")
+    public ApiResponse<User> getUserInfo() {
+        // 从 SecurityUtil 获取当前登录用户的 ID
+        Long userId = SecurityUtil.getCurrentUserId();
+        if (userId == null) {
+            return ApiResponse.error(401, "用户未登录");
+        }
+        // 从数据库查询用户信息
+        User user = userLoginService.selectById(userId);
+        if (user == null) {
+            return ApiResponse.error(404, "用户不存在");
+        }
+        return ApiResponse.success(user);
     }
     // 测试接口
     @GetMapping("/test")

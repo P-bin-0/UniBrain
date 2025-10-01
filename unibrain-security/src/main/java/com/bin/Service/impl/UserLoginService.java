@@ -101,4 +101,8 @@ public class UserLoginService {
         }
         return false;
     }
+
+    public User selectById(Long userId) {
+        return userMapper.selectById(userId);
+    }
 }

@@ -9,6 +9,7 @@ import com.bin.service.BooksService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class BooksController {
      * 分页查询书籍
      * @return 书籍列表
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/page")
     public ApiResponse<PageResult<BooksVo>> pageQuery(BooksPageQuery booksPageQuery) {
         PageResult<BooksVo> pageResult = booksService.pageQuery(booksPageQuery);
@@ -35,6 +37,7 @@ public class BooksController {
     /**
      * 根据id查询书籍
      */
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<Books> getById(@PathVariable("id") Long id) {
         // 校验id是否为空
@@ -47,6 +50,7 @@ public class BooksController {
     /**
      * 添加书籍
      */
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @PostMapping("/add")
     public ApiResponse<Books> add(@RequestBody Books books) {
         booksService.addBook(books);
@@ -55,6 +59,7 @@ public class BooksController {
     /**
      * 删除书籍(批量或单都可)
      */
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @DeleteMapping("/delete/{ids}")
     public ApiResponse<Books> delete(@PathVariable("ids") List<Long> ids) {
         // 校验ids是否为空
@@ -68,6 +73,7 @@ public class BooksController {
     /**
      * 更新书籍
      */
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     @PutMapping("/update")
     public ApiResponse<Books> update(@RequestBody Books books) {
         booksService.updateBook(books);

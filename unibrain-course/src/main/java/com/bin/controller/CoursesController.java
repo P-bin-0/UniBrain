@@ -5,6 +5,7 @@ import com.bin.dto.Courses;
 import com.bin.response.ApiResponse;
 import com.bin.service.CoursesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class CoursesController {
     /**
      * 新增选修课（修改is_active字段，true为已选，false为未选）
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/add")
     public ApiResponse<Courses> addCourse(@RequestParam("id") Long id) {
         try {
@@ -37,6 +39,7 @@ public class CoursesController {
     /**
      * 删除选修课（修改is_active字段，true为已选，false为未选）
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/delete")
     public ApiResponse<Courses> deleteCourse(@RequestParam("id") Long id) {
         try {
@@ -53,6 +56,7 @@ public class CoursesController {
     /**
      * 查询所有选修课
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/queryAll")
     public ApiResponse<List<Courses>> queryAllCourses() {
         List<Courses> list = coursesService.list(new LambdaQueryWrapper<Courses>()
@@ -62,6 +66,7 @@ public class CoursesController {
     /**
      * 查询所有已选选修课
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/queryIsActiveTrue")
     public ApiResponse<List<Courses>> querySelectedCourses() {
         List<Courses> isActiveTrue = coursesService.getIsActiveTrue();
@@ -70,6 +75,7 @@ public class CoursesController {
     /**
      * 查询所有未选选修课
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/queryIsActiveFalse")
     public ApiResponse<List<Courses>> queryUnselectedCourses() {
         List<Courses> isActiveFalse = coursesService.getIsActiveFalse();

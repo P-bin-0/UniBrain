@@ -9,5 +9,10 @@ import java.util.List;
 
 @Mapper
 public interface UserCoursesMapper extends BaseMapper<UserCourses> {
-    List<UserCoursesVO> getShowUserCourses();
+    /**
+     * 获取用户的课表
+     * @param userId 用户ID
+     * @return 用户的课表
+     */
+    List<UserCoursesVO> getShowUserCourses(Long userId);
 }

@@ -10,6 +10,7 @@ import com.bin.service.EvaluateService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class EvaluateController {
     /**
      * 查询评价课程（用户名不能为空）
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/getEvaluate")
     public ApiResponse<List<EvaluateVO>> getEvaluate(EvaluatePageQuery query) {
         log.info("查询评价课程，参数：{}", query);
@@ -37,6 +39,7 @@ public class EvaluateController {
     /**
      * 评价课程
      */
+    @PreAuthorize("hasAnyRole('USER')")
     @PutMapping("/updateEvaluate")
     public ApiResponse<String> updateEvaluate(@RequestBody Evaluate evaluate) {
         if (evaluate.getId() == null) {
@@ -48,6 +51,7 @@ public class EvaluateController {
     /**
      * 根据评价id查询评价课程
      */
+    @PreAuthorize("hasAnyRole('USER')")
     @GetMapping("/getById")
     public ApiResponse<EvaluateVO> getById(@RequestParam("id") Long id) {
         EvaluateVO evaluateVO = evaluateService.getEvaluateById(id);

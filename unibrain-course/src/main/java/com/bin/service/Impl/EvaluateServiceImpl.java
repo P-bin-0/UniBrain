@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bin.Service.impl.UserLoginService;
 import com.bin.dto.Evaluate;
 import com.bin.dto.vo.EvaluatePageQuery;
 import com.bin.dto.vo.EvaluateVO;
 import com.bin.dto.vo.PageResult;
 import com.bin.mapper.EvaluateMapper;
 import com.bin.service.EvaluateService;
+import com.bin.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +27,8 @@ import java.util.stream.Collectors;
 public class EvaluateServiceImpl extends ServiceImpl<EvaluateMapper, Evaluate> implements EvaluateService {
     @Autowired
     private EvaluateMapper evaluateMapper;
+    @Autowired
+    private UserLoginService userLoginService;
 
     /**
      * 查询评价课程
@@ -33,13 +37,13 @@ public class EvaluateServiceImpl extends ServiceImpl<EvaluateMapper, Evaluate> i
      */
     @Override
     public List<EvaluateVO> getEvaluate(EvaluatePageQuery query) {
-        //判断用户名是否为空
-        if (query.getUserName() == null || query.getUserName().isEmpty()) {
-            throw new IllegalArgumentException("评价人不能为空");
-        }
+        // 获取当前用户ID
+        Long userId = SecurityUtil.getCurrentUserId();
+        // 根据ID获取当前登录用户的昵称
+        String userName = userLoginService.selectById(userId).getUsername();
         //直接将数据库的数据查询出来
         LambdaQueryWrapper<Evaluate> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Evaluate::getUserName, query.getUserName());
+        wrapper.eq(Evaluate::getUserName, userName);
         if (query.getSemester() != null) {
             wrapper.eq(Evaluate::getSemester, query.getSemester());
         }

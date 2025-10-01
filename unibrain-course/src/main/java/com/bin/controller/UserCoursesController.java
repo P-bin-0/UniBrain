@@ -5,10 +5,12 @@ import com.bin.dto.vo.UserCoursesVO;
 import com.bin.response.ApiResponse;
 import com.bin.response.NoWrap;
 import com.bin.service.UserCoursesService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +30,9 @@ public class UserCoursesController {
      */
     @Autowired
     private UserCoursesService userCoursesService;
+    // 登录用户可访问
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/show")
-    //TODO完成根据用户ID查询用户的课表
     public ApiResponse<List<UserCoursesVO>> showUserCourses() {
         // 从数据库查询用户的课表
         List<UserCoursesVO> userCourses = userCoursesService.getUserCourses();
@@ -41,6 +44,8 @@ public class UserCoursesController {
     /**
      * 导出用户的课表为Excel文件
      */
+    // 登录用户可访问
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/export")
     @NoWrap
     public void exportSchedule(HttpServletResponse response) {
