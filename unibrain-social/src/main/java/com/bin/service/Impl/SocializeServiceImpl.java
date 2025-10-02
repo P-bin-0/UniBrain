@@ -1,24 +1,16 @@
 package com.bin.service.Impl;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldSort;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.core.search.TotalHits;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bin.dto.*;
 import com.bin.dto.vo.SocializeVO;
+import com.bin.entity.User;
 import com.bin.mapper.SocializeMapper;
 import com.bin.mapper.UserMapper;
-import com.bin.model.entity.User;
 import com.bin.repository.SocializeDocumentRepository;
 import com.bin.service.SocializeService;
+import com.bin.util.SecurityUtil;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,14 +20,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -115,6 +104,11 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
         if (socialize == null) {
             throw new IllegalArgumentException("评论不存在");
         }
+        // 查询该评论是否是当前登录用户的评论
+        Long currentUserId = SecurityUtil.getCurrentUserId();
+        if (!socialize.getUserId().equals(currentUserId)) {
+            throw new IllegalArgumentException("您没有权限删除该评论");
+        }
         // 删除评论
         socializeMapper.deleteById(id);
         // 删除子评论
@@ -155,10 +149,6 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
     }*/
     @Override
     public PageResult<SocializeVO> searchComment(String keyword, PageQueryDTO pageQueryDTO) {
-        int maxPage = 1000; // 可配置在配置文件中
-        if (pageQueryDTO.getPage() > maxPage) {
-            throw new IllegalArgumentException("页码超过上限，请使用滚动加载");
-        }
         // 使用Elasticsearch进行搜索
         PageRequest pageRequest = PageRequest.of(
                 pageQueryDTO.getPage() - 1,
@@ -166,39 +156,71 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
                 Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));
         Page<SocializeDocument> documentPage;
         try {
-            documentPage = socializeDocumentRepository.findByContentContaining(keyword, pageRequest);
+            documentPage = socializeDocumentRepository.findByParentIdAndContentContaining(0L, keyword, pageRequest);
         } catch (Exception e) {
             logger.error("ES搜索评论失败，关键词：{}，分页参数：{}", keyword, pageQueryDTO, e);
             throw new RuntimeException("搜索失败，请稍后重试");
         }
 
-        // 转换为VO对象
-        List<SocializeVO> socializeVOList = documentPage.getContent().stream()
-                .map(document -> {
+        // 2. 转换顶级评论为VO
+        List<SocializeVO> topVoList = documentPage.getContent().stream()
+                .map(doc -> {
                     SocializeVO vo = new SocializeVO();
-                    BeanUtils.copyProperties(document, vo);
+                    BeanUtils.copyProperties(doc, vo);
+                    vo.setParentId(Objects.requireNonNullElse(doc.getParentId(), 0L));
                     return vo;
                 })
-                .toList();
-        // 返回结果
-        return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
-    }
-    // 按用户ID搜索评论
-    @Override
-    public SocializeVO searchByCommentIdScrollInit(Long id) {
-        // 分页查询
-        /*PageRequest pageRequest = PageRequest.of(
-                pageQueryDTO.getPage() - 1,
-                pageQueryDTO.getPageSize(),
-                Sort.by(Sort.Direction.fromString(pageQueryDTO.getSortDir()), pageQueryDTO.getSortField()));*/
-        SocializeDocument document = socializeDocumentRepository.findById(id).orElse(null);
-        // 转换为VO对象
-        SocializeVO vo = new SocializeVO();
-        if (document != null) {
-            BeanUtils.copyProperties(document, vo);
+                .collect(Collectors.toList());
+
+        // 3. 批量查询这些顶级评论下的子评论（且子评论内容也包含关键词）
+        if (!topVoList.isEmpty()) {
+            List<Long> topIds = topVoList.stream().map(SocializeVO::getId).collect(Collectors.toList());
+            for (Long topId : topIds) {
+                // 搜索子评论（parentId=顶级ID 且 内容含关键词）
+                List<SocializeDocument> childDocs = socializeDocumentRepository
+                        .findByParentIdAndContentContaining(topId, keyword, Sort.by("createAt"));
+                // 转换并挂载子评论（递归处理层级）
+                List<SocializeVO> childVos = childDocs.stream()
+                        .map(doc -> {
+                            SocializeVO vo = new SocializeVO();
+                            BeanUtils.copyProperties(doc, vo);
+                            vo.setParentId(Objects.requireNonNullElse(doc.getParentId(), topId));
+                            vo.setChildren(getChildrenByParentIdAndKeyword(vo.getId(), keyword)); // 递归查孙子评论
+                            return vo;
+                        })
+                        .collect(Collectors.toList());
+                // 挂载到对应的顶级评论
+                topVoList.stream()
+                        .filter(vo -> vo.getId().equals(topId))
+                        .findFirst()
+                        .ifPresent(vo -> vo.setChildren(childVos));
+            }
         }
         // 返回结果
-        return vo;
+        return new PageResult<>(topVoList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
+    }
+    /**
+     * 按评论ID查询（含完整层级：当前评论+所有子评论）
+     * @param id 评论ID
+     * @return 带完整层级的评论VO
+     */
+    @Override
+    public SocializeVO searchByCommentIdScrollInit(Long id) {
+        // 1. 先查询当前评论的基础信息
+        Optional<SocializeDocument> docOpt = socializeDocumentRepository.findById(id);
+        if (docOpt.isEmpty()) {
+            logger.warn("评论ID:{}不存在", id);
+            return null;
+        }
+        // 2. 转换为VO
+        SocializeVO currentVO = new SocializeVO();
+        BeanUtils.copyProperties(docOpt.get(), currentVO);
+
+        // 3. 递归查询所有子评论（按parentId=当前评论ID）
+        List<SocializeVO> childrenVO = getChildrenByParentId(id);
+        currentVO.setChildren(childrenVO);
+
+        return currentVO;
     }
 
     // 按目标ID搜索（如某篇文章的所有评论）
@@ -223,13 +245,15 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
     }
 
     /**
-     * 查询所有评论
+     * 查询所有评论（分页+层级组装）
+     * @param pageQueryDTO 分页参数
+     * @return 分页的带层级评论列表
      */
     @Override
     public PageResult<SocializeVO> selectAll(PageQueryDTO pageQueryDTO) {
         // 分页查询所有评论
         PageRequest pageRequest = PageRequest.of(pageQueryDTO.getPage() - 1, pageQueryDTO.getPageSize(), Sort.by(Sort.Direction.DESC, "createAt"));
-        Page<SocializeDocument> documentPage = socializeDocumentRepository.findAll(pageRequest);
+        Page<SocializeDocument> documentPage = socializeDocumentRepository.findByParentId(0L, pageRequest);
         // 转换为VO对象
         List<SocializeVO> socializeVOList = documentPage.getContent().stream()
                 .map(document -> {
@@ -238,6 +262,43 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
                     return vo;
                 })
                 .toList();
+        // 3. 批量查询所有顶级评论的子评论（避免N+1查询）
+        if (!socializeVOList.isEmpty()) {
+            // 3.1 收集所有顶级评论ID
+            List<Long> topCommentIds = socializeVOList.stream()
+                    .map(SocializeVO::getId)
+                    .toList();
+
+            // 3.2 查询这些顶级评论的所有子评论（一次查询，parentId in 顶级评论ID）
+            List<SocializeDocument> allChildDocs = new ArrayList<>();
+            for (Long topId : topCommentIds) {
+                // 调用已有方法查询子评论（按创建时间正序）
+                List<SocializeDocument> childDocs = socializeDocumentRepository.findByParentId(topId, Sort.by(Sort.Direction.ASC, "createAt"));
+                allChildDocs.addAll(childDocs);
+            }
+
+            // 3.3 转换子评论为VO，并按parentId分组（方便挂载）
+            Map<Long, List<SocializeVO>> childVoGroupByParentId = allChildDocs.stream()
+                    .map(doc -> {
+                        SocializeVO vo = new SocializeVO();
+                        BeanUtils.copyProperties(doc, vo);
+                        return vo;
+                    })
+                    .collect(Collectors.groupingBy(SocializeVO::getParentId));
+
+            // 3.4 给每个顶级评论挂载子评论（并递归加载子评论的子评论）
+            for (SocializeVO topVo : socializeVOList) {
+                List<SocializeVO> directChildren = childVoGroupByParentId.getOrDefault(topVo.getId(), Collections.emptyList());
+                // 递归加载子评论的子评论（复用已有方法）
+                List<SocializeVO> childrenWithHierarchy = directChildren.stream()
+                        .map(childVo -> {
+                            childVo.setChildren(getChildrenByParentId(childVo.getId()));
+                            return childVo;
+                        })
+                        .collect(Collectors.toList());
+                topVo.setChildren(childrenWithHierarchy);
+            }
+        }
         // 返回结果
         return new PageResult<>(socializeVOList, documentPage.getTotalElements(), documentPage.getNumber() + 1, documentPage.getSize());
     }
@@ -280,7 +341,7 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
                     Map<Long,String> userIdToNameMap = users.stream()
                             .collect(Collectors.toMap(
                                     User::getId,
-                                    User::getName,
+                                    User::getUsername,
                                     (k1,k2) -> k1
                             ));
                     List<SocializeDocument> documents = allSocializes.stream()
@@ -317,7 +378,7 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
     }
     private SocializeDocument convertToDocument(Socialize socialize) {
         User user = userMapper.selectById(socialize.getUserId());
-        String username = user != null ? user.getName() : "未知用户";
+        String username = user != null ? user.getUsername() : "未知用户";
         return SocializeDocument.builder()
                 .id(socialize.getId())
                 .userId(socialize.getUserId())
@@ -332,4 +393,39 @@ public class SocializeServiceImpl extends ServiceImpl<SocializeMapper, Socialize
                 .build();
     }
 
+    /**
+     * 辅助方法：按父评论ID查询所有子评论（递归）
+     * @param parentId 父评论ID
+     * @return 子评论VO列表（带层级）
+     */
+    private List<SocializeVO> getChildrenByParentId(Long parentId) {
+        // 1. 从ES查询该父评论下的所有子评论（按创建时间正序，旧回复在前）
+        Sort sort = Sort.by(Sort.Direction.ASC, "createAt");
+        List<SocializeDocument> childDocs = socializeDocumentRepository.findByParentId(parentId, sort);
+
+        // 2. 转换为VO并递归查询子评论的子评论
+        return childDocs.stream()
+                .map(doc -> {
+                    SocializeVO childVO = new SocializeVO();
+                    BeanUtils.copyProperties(doc, childVO);
+                    // 递归查询当前子评论的子评论
+                    childVO.setChildren(getChildrenByParentId(doc.getId()));
+                    return childVO;
+                })
+                .collect(Collectors.toList());
+    }
+    // 辅助方法：递归查询子评论（含关键词）
+    private List<SocializeVO> getChildrenByParentIdAndKeyword(Long parentId, String keyword) {
+        List<SocializeDocument> childDocs = socializeDocumentRepository
+                .findByParentIdAndContentContaining(parentId, keyword, Sort.by("createAt"));
+        return childDocs.stream()
+                .map(doc -> {
+                    SocializeVO vo = new SocializeVO();
+                    BeanUtils.copyProperties(doc, vo);
+                    vo.setParentId(Objects.requireNonNullElse(doc.getParentId(), parentId));
+                    vo.setChildren(getChildrenByParentIdAndKeyword(doc.getId(), keyword));
+                    return vo;
+                })
+                .collect(Collectors.toList());
+    }
 }

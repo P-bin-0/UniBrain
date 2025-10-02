@@ -7,6 +7,7 @@ import com.bin.dto.vo.SocializeVO;
 import com.bin.response.ApiResponse;
 import com.bin.service.SocializeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class SocializeController {
     /**
      * 发表评论
      */
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/comment")
     public ApiResponse<SocializeVO> publishComment(@RequestBody SocializeDTO socializeDTO) {
         socializeService.insertComment(socializeDTO);
@@ -35,6 +37,7 @@ public class SocializeController {
     /**
      * 删除评论
      */
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/delete/{id}")
     public ApiResponse<SocializeVO> deleteComment(@PathVariable("id") Long id) {
         socializeService.removeCommentById(id);
@@ -43,6 +46,7 @@ public class SocializeController {
     /**
      * 根据关键词进行搜索
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/search")
     public ApiResponse<PageResult<SocializeVO>> searchComment(@RequestParam("keyword") String keyword,
                                                               @Validated PageQueryDTO pageQueryDTO) {
@@ -50,13 +54,15 @@ public class SocializeController {
         return ApiResponse.success(voList);
     }
     // 按评论ID搜索评论
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/search/comment")
     public ApiResponse<SocializeVO> searchByCommentId(@RequestParam("id") Long id) {
         SocializeVO vo = socializeService.searchByCommentIdScrollInit(id);
         return ApiResponse.success(vo);
     }
 
-    // 按目标ID搜索评论
+    // 按目标ID搜索评论（如某篇文章的所有评论）
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/search/target")
     public ApiResponse<PageResult<SocializeVO>> searchByTargetId(@RequestParam("targetId") Long targetId,
                                                            @Validated PageQueryDTO pageQueryDTO) {
@@ -64,6 +70,7 @@ public class SocializeController {
         return ApiResponse.success(voList);
     }
     // 查询所有评论
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/all")
     public ApiResponse<PageResult<SocializeVO>> getAllComments(@Validated PageQueryDTO pageQueryDTO) {
         PageResult<SocializeVO> voList = socializeService.selectAll(pageQueryDTO);
