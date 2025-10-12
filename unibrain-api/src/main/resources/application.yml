@@ -14,6 +14,10 @@ spring:
     uris: http://localhost:9200
     connection-timeout: 5s
     socket-timeout: 30s
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: auto
 
 mybatis-plus:
   configuration:
@@ -39,4 +43,4 @@ langchain4j:
 
 jwt:
   secret: a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8s9T0u1V2w3X4y5Z6
-  expiration: 7200000
+  expiration: 60000

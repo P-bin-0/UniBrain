@@ -1,29 +1,22 @@
 package com.bin.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
- * 课程表
+ * 课程数据传输对象（DTO）
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-@TableName("courses")
-public class Courses {
+@AllArgsConstructor
+public class CourseDTO {
     /**
-     * 课程唯一标识符 (bigint)
+     * 课程ID (主键) (bigint)
      */
-    @TableId(type = IdType.AUTO)
     private Long id;
-
     /**
      * 课程代码 (唯一标识) (varchar(20))
      */
@@ -83,16 +76,6 @@ public class Courses {
      * 课程是否启用 (TRUE=启用, FALSE=停用) (tinyint(1))
      */
     private Boolean isActive;
-
-    /**
-     * 记录创建时间 (timestamp)
-     */
-    private LocalDateTime createdAt;
-
-    /**
-     * 记录最后更新时间 (timestamp)
-     */
-    private LocalDateTime updatedAt;
     /**
      * 课程总名额 (int)
      */
@@ -101,8 +84,4 @@ public class Courses {
      * 剩余名额 (int)
      */
     private Integer remainingQuota;
-    /**
-     * 版本号 (int)
-     */
-    private Integer version;
 }
