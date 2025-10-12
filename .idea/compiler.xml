@@ -9,14 +9,12 @@
         <outputRelativeToContentRoot value="true" />
         <module name="unibrain-security" />
         <module name="unibrain-paper" />
+        <module name="unibrain-social" />
         <module name="unibrain-api" />
         <module name="unibrain-common" />
         <module name="unibrain-experiment" />
         <module name="unibrain-course" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="unibrain-social" target="17" />
-    </bytecodeTargetLevel>
   </component>
 </project>
